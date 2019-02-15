@@ -1,6 +1,8 @@
 package projects.blissrecruitment.sbp.blissballot;
 
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -42,13 +44,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 pb.setVisibility(View.VISIBLE);
                 retry_button.setVisibility(View.INVISIBLE);
-                makeCheckServerRequest(checkServerRequest);
+                execCheckServerRequest(checkServerRequest);
             }
         });
 
+        QuestionsListFragment fragment = new QuestionsListFragment();
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.questions_fragment,fragment);
+        fragmentTransaction.commit();
+
         queue = Volley.newRequestQueue(this);
         checkServerRequest = buildCheckServerRequest();
-        makeCheckServerRequest(checkServerRequest);
+        execCheckServerRequest(checkServerRequest);
 
     }
 
@@ -63,6 +70,7 @@ public class MainActivity extends AppCompatActivity {
                             obj = new JSONObject(response);
                             String status = obj.getString("status");
                             Log.d("APP_DEBUG",status);
+                            status = "KO";
                             if(status.equals("OK")){
                                 pb.setVisibility(View.INVISIBLE);
                             }else{
@@ -77,22 +85,17 @@ public class MainActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                pb.setVisibility(View.INVISIBLE);
+                retry_button.setVisibility(View.VISIBLE);
             }
         });
 
         return healthRequest;
     }
 
-    public void makeCheckServerRequest(StringRequest healthRequest){
+    public void execCheckServerRequest(StringRequest healthRequest){
         queue.add(healthRequest);
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return true;
-    }
 
 }
