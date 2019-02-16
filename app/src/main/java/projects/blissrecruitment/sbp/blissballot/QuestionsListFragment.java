@@ -9,6 +9,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
+import android.widget.ListView;
 import android.widget.SearchView;
 
 import java.util.ArrayList;
@@ -33,8 +34,8 @@ public class QuestionsListFragment extends ListFragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        Question q1 = new Question("whats the time");
-        Question q2 = new Question("weather");
+        Question q1 = new Question("1");
+        Question q2 = new Question("1");
         questions = new ArrayList<Question>();
         questions.add(q1);
         questions.add(q2);
@@ -48,7 +49,15 @@ public class QuestionsListFragment extends ListFragment {
         adapter = new QuestionAdapter(getContext(),questions);
         setListAdapter(adapter);
         array_aux = (ArrayAdapter<Question>) this.getListAdapter();
+
+
         return v;
     }
 
+    @Override
+    public void onListItemClick(ListView l, View v, int position, long id) {
+        super.onListItemClick(l, v, position, id);
+
+        //create intent
+    }
 }

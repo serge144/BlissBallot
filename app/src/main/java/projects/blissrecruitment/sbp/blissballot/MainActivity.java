@@ -1,8 +1,10 @@
 package projects.blissrecruitment.sbp.blissballot;
 
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
@@ -25,7 +27,6 @@ import org.json.JSONObject;
 public class MainActivity extends AppCompatActivity {
 
     private ProgressBar pb;
-    private Button retry_button;
     private static String BLISS_HEALTH = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/health";
     private RequestQueue queue;
     private StringRequest checkServerRequest;
@@ -38,15 +39,6 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         pb = findViewById(R.id.progressBar);
-        retry_button = findViewById(R.id.retry_button);
-        retry_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                pb.setVisibility(View.VISIBLE);
-                retry_button.setVisibility(View.INVISIBLE);
-                execCheckServerRequest(checkServerRequest);
-            }
-        });
 
         QuestionsListFragment fragment = new QuestionsListFragment();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
@@ -75,7 +67,7 @@ public class MainActivity extends AppCompatActivity {
                                 pb.setVisibility(View.INVISIBLE);
                             }else{
                                 pb.setVisibility(View.INVISIBLE);
-                                retry_button.setVisibility(View.VISIBLE);
+                                retryDialog();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace();
@@ -86,13 +78,26 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onErrorResponse(VolleyError error) {
                 pb.setVisibility(View.INVISIBLE);
-                retry_button.setVisibility(View.VISIBLE);
             }
         });
 
         return healthRequest;
     }
 
+    public void retryDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setMessage("Retry connection").setTitle("Server Connectivity");
+        builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                pb.setVisibility(View.VISIBLE);
+                execCheckServerRequest(checkServerRequest);
+            }
+        });
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+    }
     public void execCheckServerRequest(StringRequest healthRequest){
         queue.add(healthRequest);
     }

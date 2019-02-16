@@ -20,7 +20,7 @@ public class QuestionAdapter extends ArrayAdapter<Question> {
         LayoutInflater inflater = LayoutInflater.from(getContext());
         View customView = inflater.inflate(R.layout.item_question,parent,false);
         Question question = (Question)getItem(position);
-        TextView questionText = (TextView) customView.findViewById(R.id.question_text);
+        TextView questionText = (TextView) customView.findViewById(R.id.question_id);
         questionText.setText(question.getQuestion());
         return customView;
     }
