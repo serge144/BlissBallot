@@ -1,6 +1,7 @@
 package projects.blissrecruitment.sbp.blissballot;
 
 import android.content.DialogInterface;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -24,12 +25,10 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity  {
 
-    private ProgressBar pb;
-    private static String BLISS_HEALTH = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/health";
-    private RequestQueue queue;
     private StringRequest checkServerRequest;
+    private BlankFragment loadFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,22 +37,20 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        pb = findViewById(R.id.progressBar);
-
-        QuestionsListFragment fragment = new QuestionsListFragment();
+        //set initial load screen fragment
+        loadFragment = new BlankFragment();
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-        fragmentTransaction.replace(R.id.questions_fragment,fragment);
+        fragmentTransaction.replace(R.id.fragment_container,loadFragment,"load_fragment");
         fragmentTransaction.commit();
 
-        queue = Volley.newRequestQueue(this);
+        //make request to health check
         checkServerRequest = buildCheckServerRequest();
-        execCheckServerRequest(checkServerRequest);
-
+        BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
     }
 
     public StringRequest buildCheckServerRequest(){
 
-        StringRequest healthRequest = new StringRequest(Request.Method.GET, BLISS_HEALTH,
+        StringRequest healthRequest = new StringRequest(Request.Method.GET, BlissApiSingleton.BLISS_HEALTH_REQUEST,
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
@@ -62,11 +59,13 @@ public class MainActivity extends AppCompatActivity {
                             obj = new JSONObject(response);
                             String status = obj.getString("status");
                             Log.d("APP_DEBUG",status);
-                            status = "KO";
                             if(status.equals("OK")){
-                                pb.setVisibility(View.INVISIBLE);
+                                QuestionsListFragment fragment = new QuestionsListFragment();
+                                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+                                fragmentTransaction.replace(R.id.fragment_container,fragment);
+                                fragmentTransaction.commit();
                             }else{
-                                pb.setVisibility(View.INVISIBLE);
+                                loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.INVISIBLE);
                                 retryDialog();
                             }
                         } catch (JSONException e) {
@@ -77,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                pb.setVisibility(View.INVISIBLE);
+
             }
         });
 
@@ -90,17 +89,13 @@ public class MainActivity extends AppCompatActivity {
         builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                pb.setVisibility(View.VISIBLE);
-                execCheckServerRequest(checkServerRequest);
+                loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.VISIBLE);
+                BlissApiSingleton.getInstance(getApplicationContext()).addToRequestQueue(checkServerRequest);
             }
         });
         AlertDialog dialog = builder.create();
         dialog.show();
 
     }
-    public void execCheckServerRequest(StringRequest healthRequest){
-        queue.add(healthRequest);
-    }
-
 
 }
