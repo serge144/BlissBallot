@@ -2,6 +2,7 @@ package projects.blissrecruitment.sbp.blissballot;
 
 
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
@@ -42,6 +43,7 @@ public class QuestionsListFragment extends ListFragment {
     private ListView listView;
     private ListAdapter adapter;
     private SearchView searchView;
+
     private boolean fetchingRecords = false;
     private boolean searchMode = false;
     private boolean firstSearch = true; //used to determine if it was the first fetch in search mode
@@ -73,36 +75,7 @@ public class QuestionsListFragment extends ListFragment {
         setListAdapter(adapter);
 
         searchView = v.findViewById(R.id.search_question);
-        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-            @Override
-            public boolean onQueryTextSubmit(String query) {
-                listView.setSelection(0); //need to go up
-                searchMode = true;
-                firstSearch = true;
-                filter = query;
-                currentOffset = 0;
-                Log.d("APP_DEBUG","[INFO] Now in search mode");
-               JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,query);
-               BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
-
-
-               return false;
-            }
-
-            @Override
-            public boolean onQueryTextChange(String newText) {
-                if(newText.equals("")){
-                    searchMode = false;
-                    firstSearch = true;
-                    filter = "";
-                    currentOffset = 0;
-                    Log.d("APP_DEBUG","[INFO] Now in normal mode");
-                    JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter); //update the list with first 10 recs
-                    BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
-                }
-                return false;
-            }
-        });
+        searchView.setOnQueryTextListener(buildSearchListener());
 
         return v;
     }
@@ -150,11 +123,14 @@ public class QuestionsListFragment extends ListFragment {
         return responseQuestions;
     }
 
+    /*
+        Updates the List view with new records
+        @param lv   new records to add to the list view
+    */
     private void updateListView(ArrayList<Question> newQuestions){
 
         if(searchMode){
             if(firstSearch){ // clean in the first search, but then when scrolling to the bottom, it must not clear the questions anymore
-
                 questions.clear();
                 firstSearch = false;
             }
@@ -169,6 +145,10 @@ public class QuestionsListFragment extends ListFragment {
         }
     }
 
+    /*
+        Sets a scroll listener that detects when the list as reached the bottom (user intents to load more records)
+        @param lv   the ListView
+    */
     public void setScrollBottomListener(ListView lv){
 
         listView.setOnScrollListener(new AbsListView.OnScrollListener() {
@@ -194,6 +174,41 @@ public class QuestionsListFragment extends ListFragment {
                 }
             }
         });
+    }
+
+    /*  Builds the SearchView listener. The Search listener takes care of sending requests with filter to API
+    *   @return the Listener
+    */
+    public SearchView.OnQueryTextListener buildSearchListener(){
+
+        return new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                listView.setSelection(0); //need to go up
+                searchMode = true;
+                firstSearch = true;
+                filter = query;
+                currentOffset = 0;
+                Log.d("APP_DEBUG","[INFO] Now in search mode");
+                JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,query);
+                BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                if(newText.equals("")){
+                    searchMode = false;
+                    firstSearch = true;
+                    filter = "";
+                    currentOffset = 0;
+                    Log.d("APP_DEBUG","[INFO] Now in normal mode");
+                    JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter); //update the list with first 10 recs
+                    BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
+                }
+                return false;
+            }
+        } ;
 
     }
 
@@ -201,6 +216,12 @@ public class QuestionsListFragment extends ListFragment {
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
-        //create intent
+        Log.d("APP_DEBUG","[INFO] Position:"+ position + " id:" + id);
+
+        Intent detailIntent = new Intent(getActivity(),DetailScreen.class);
+        Question q = questions.get(position);
+        detailIntent.putExtra("question",q);
+        startActivity(detailIntent);
+
     }
 }

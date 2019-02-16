@@ -15,7 +15,6 @@ import android.widget.ProgressBar;
  */
 public class BlankFragment extends Fragment  {
 
-
     public BlankFragment() {
         // Required empty public constructor
     }
