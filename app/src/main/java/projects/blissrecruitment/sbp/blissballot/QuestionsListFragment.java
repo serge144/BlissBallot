@@ -162,7 +162,6 @@ public class QuestionsListFragment extends ListFragment {
                 if(!fetchingRecords){
                     int position = firstVisibleItem+visibleItemCount;
                     int listLimit = totalItemCount;
-
                     // Check if the bottom list has been reached
                     if (position >= listLimit && totalItemCount > 0) {
                         Log.d("APP_DEBUG","[INFO] List bottom reached");
@@ -209,14 +208,13 @@ public class QuestionsListFragment extends ListFragment {
                 return false;
             }
         } ;
-
     }
 
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);
 
-        Log.d("APP_DEBUG","[INFO] Position:"+ position + " id:" + id);
+        Log.d("APP_DEBUG","[INFO] Clicked Item Position:"+ position + " id:" + id);
 
         Intent detailIntent = new Intent(getActivity(),DetailScreen.class);
         Question q = questions.get(position);

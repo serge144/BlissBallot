@@ -21,6 +21,7 @@ public class DetailScreen extends AppCompatActivity {
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Question Detail");
         actionBar.setDisplayHomeAsUpEnabled(true);
+
     }
 
     @Override
