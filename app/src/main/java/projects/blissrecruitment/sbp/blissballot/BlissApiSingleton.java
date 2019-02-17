@@ -7,6 +7,8 @@ import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONObject;
+
 public class BlissApiSingleton  {
 
     public static String BLISS_HEALTH_REQUEST = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/health";
@@ -39,5 +41,6 @@ public class BlissApiSingleton  {
         Log.d("APP_DEBUG","[REQUEST]" + req.toString());
         getRequestQueue().add(req);
     }
+
 
 }

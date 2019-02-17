@@ -2,9 +2,11 @@ package projects.blissrecruitment.sbp.blissballot;
 
 import android.os.Parcel;
 import android.os.Parcelable;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class Question implements Parcelable  {
 
@@ -109,5 +111,43 @@ public class Question implements Parcelable  {
         dest.writeString(thumb_url);
         dest.writeString(published_at);
         dest.writeString(choices.toString());
+    }
+
+    public void vote(String choice){
+        Log.d("APP_DEBUG","[INFO-VOTING] Vote counts BEFORE:" + choices.toString());
+        for(int i = 0; i < choices.length(); i++){
+            try {
+                JSONObject mChoice = (JSONObject) choices.get(i);
+                if(mChoice.getString("choice").equals(choice)){
+                    int votes = mChoice.getInt("votes");
+                    votes = votes +1;
+                    mChoice.put("votes",votes);
+                    break;
+                }
+            } catch (JSONException e) {
+                //TODO take care of this error
+                e.printStackTrace();
+            }
+        }
+        Log.d("APP_DEBUG","[INFO-VOTING] Vote counts AFTER:" + choices.toString());
+
+    }
+
+
+    public JSONObject toJSON(){
+
+        JSONObject jo = new JSONObject();
+        try {
+            jo.put("id",id);
+            jo.put("text",text);
+            jo.put("image_url",img_url);
+            jo.put("thumb_url",thumb_url);
+            jo.put("published_at",published_at);
+            jo.put("choices",choices);
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+
+        return jo;
     }
 }
