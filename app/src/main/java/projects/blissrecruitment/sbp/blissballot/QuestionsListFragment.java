@@ -216,9 +216,12 @@ public class QuestionsListFragment extends ListFragment {
 
         Log.d("APP_DEBUG","[INFO] Clicked Item Position:"+ position + " id:" + id);
 
-        Intent detailIntent = new Intent(getActivity(),DetailScreen.class);
+        //need to wrap the Parcelable inside a Bundle so it doesnt get ClassNotFoundException
         Question q = questions.get(position);
-        detailIntent.putExtra("question",q);
+        Bundle b = new Bundle();
+        b.putParcelable("question",q);
+        Intent detailIntent = new Intent(getActivity(),DetailScreen.class);
+        detailIntent.putExtra("bundle",b);
         startActivity(detailIntent);
 
     }

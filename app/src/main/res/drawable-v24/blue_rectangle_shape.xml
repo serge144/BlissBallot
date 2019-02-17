@@ -5,7 +5,7 @@
         <shape
             android:shape="rectangle">
             <solid
-                android:color="#A055AAEA"/>
+                android:color="#a02e71a3"/>
 
             <corners android:radius="8dp" />
         </shape>
