@@ -38,7 +38,6 @@ public class QuestionsListFragment extends ListFragment {
         // Required empty public constructor
     }
 
-
     private ArrayList<Question> questions;
     private ListView listView;
     private ListAdapter adapter;
