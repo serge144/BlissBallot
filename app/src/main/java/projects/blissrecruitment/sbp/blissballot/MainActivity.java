@@ -4,6 +4,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentActivity;
 import android.support.v4.app.FragmentTransaction;
@@ -38,6 +39,7 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     private boolean gotFirstResponse = false;
     private Uri deepLinkUri;
     public static final String COMS_ID = "main_activity_id";
+    public static final int DEEP_LINK_DIRECT_CODE = 44;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -116,8 +118,16 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             Intent detailIntent = new Intent(getApplicationContext(),DetailScreen.class);
             detailIntent.putExtra(BlissApiSingleton.ACTIVITY_CALLER , COMS_ID);
             detailIntent.putExtra("question_id",questionId);
-            startActivity(detailIntent);
+            startActivityForResult(detailIntent,DEEP_LINK_DIRECT_CODE);
+        }
+    }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        if(requestCode == DEEP_LINK_DIRECT_CODE){
+
+            Log.i("APP_DEBUG","[INFO] Returned from Detail DEEP LINK to caller activity, resuming normal flow.");
+            setListFragment(null);
         }
     }
 
@@ -127,7 +137,8 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             listFragment.setArguments(bundle);
         FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container,listFragment);
-        fragmentTransaction.commit();
+        fragmentTransaction.commitAllowingStateLoss(); //TODO not the best option as described by:
+            //@url https://medium.com/@elye.project/handling-illegalstateexception-can-not-perform-this-action-after-onsaveinstancestate-d4ee8b630066
     }
 
     public void retryDialog(){
@@ -157,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             case R.id.menu_share:
                 if(gotFirstResponse){
                     String currentFilter = listFragment.getFilter();
-                    ShareDialog shareDialog = ShareDialog.newInstance(currentFilter);
+                    ShareDialog shareDialog = ShareDialog.newInstance(currentFilter,ShareDialog.SHARE_FILTER_MODE);
                     shareDialog.show(getSupportFragmentManager(),"share_dialog");
                 }
                 break;

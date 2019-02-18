@@ -9,7 +9,9 @@
         android:layout_width="125dp"
         android:layout_height="125dp"
         android:layout_alignParentTop="true"
+        android:layout_centerInParent="true"
+        android:layout_centerVertical="true"
         android:layout_centerHorizontal="true"
-        android:layout_marginTop="145dp"
-        android:indeterminateDrawable="@drawable/progress"/>
+        android:layout_marginTop="173dp"
+        android:indeterminateDrawable="@drawable/progress" />
 </RelativeLayout>

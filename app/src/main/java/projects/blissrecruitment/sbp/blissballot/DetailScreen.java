@@ -15,6 +15,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -43,6 +44,7 @@ public class DetailScreen extends AppCompatActivity {
 
     private ImageView image;
     private Button voteBtn;
+    private ImageButton shareBtn;
     private TextView questionText;
 
     @Override
@@ -55,6 +57,7 @@ public class DetailScreen extends AppCompatActivity {
         voteBtn = findViewById(R.id.vote_button);
         questionText = findViewById(R.id.question_text_detail);
         linearLayout = findViewById(R.id.linear_section);
+        shareBtn = findViewById(R.id.share_button_detail);
         setVoteButtonListener();
 
         //A) This Activity may either be called by the MainActivity ( if its a deeplink with question_id)
@@ -75,14 +78,10 @@ public class DetailScreen extends AppCompatActivity {
                 break;
         }
 
-        //Log.d("APP_DEBUG","[INFO] Detail view, question id:" + question.getId());
-
         //change actionbar title and set a return button
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Question Detail");
         actionBar.setDisplayHomeAsUpEnabled(true); //return button
-
-
 
     }
 
@@ -95,6 +94,14 @@ public class DetailScreen extends AppCompatActivity {
         Log.d("APP_DEBUG","[REQUEST-PICASSO] Url: "+ question.getImgUrl());
         Picasso.get().load(question.getImgUrl()).transform(new CircleTransformation(45,0)).into(image);
         questionText.setText(question.getText());
+
+        shareBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                ShareDialog shareDialog = ShareDialog.newInstance(question.getId(),ShareDialog.SHARE_QUESTION_MODE);
+                shareDialog.show(getSupportFragmentManager(),"share_dialog");
+            }
+        });
 
     }
 

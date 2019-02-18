@@ -13,12 +13,14 @@ public class BlissApiSingleton  {
 
     public static String BLISS_HEALTH_REQUEST = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/health";
     public static final String BLISS_BASE_ALL_QUESTIONS_REQUEST = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/questions";
+    public static final String SHARE_BASE_URL = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/share";
+    public static final String BASE_DEEPLINK_QUESTION = "blissrecruitment://questions?question_id=";
+    public static final String BASE_DEEPLINK_FILTER = "blissrecruitment://questions?question_filter=";
     public static final String ACTIVITY_CALLER = "activity_caller_id";
 
     private static BlissApiSingleton mInstance;
     private RequestQueue mRequestQueue;
     private static Context mCtx;
-
 
     private BlissApiSingleton(Context context){
         mCtx = context;
