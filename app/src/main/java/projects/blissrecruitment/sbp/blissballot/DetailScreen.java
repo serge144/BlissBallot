@@ -1,9 +1,13 @@
 package projects.blissrecruitment.sbp.blissballot;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.provider.MediaStore;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.LayoutDirection;
@@ -47,11 +51,51 @@ public class DetailScreen extends AppCompatActivity {
     private ImageButton shareBtn;
     private TextView questionText;
 
+    /*This broadcast is used to receive messages from the NetworkBroadcastReceiver
+     *If the NBR detects no internet connection, then this local receiver receives the broadcast and sets a No-Coms Dialog
+     *@url https://trinitytuts.com/pass-data-from-broadcast-receiver-to-activity-without-reopening-activity/
+     **/
+    BroadcastReceiver broadcastReceiver =  new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("APP_DEBUG", "[BROADCAST-RECEIVER-MAIN] Received action on Main:"+intent.getAction());
+            if(intent.getAction().equals(NetworkBroadcastReceiver.NO_COMS_BROADCAST)) {
+                buildNoComsDialog().show();
+            }
+        }
+    };
+
+    public AlertDialog buildNoComsDialog(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Connectivity");
+        builder.setMessage("Please establish an internet connection.");
+        builder.setPositiveButton("Retry",null);
+        final AlertDialog ad = builder.create();
+        ad.setCanceledOnTouchOutside(false);
+        ad.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button button = ((AlertDialog) dialog).getButton(android.app.AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if(BlissApiSingleton.isConnected(getApplicationContext())){
+                            ad.dismiss();
+                        }else{
+                            Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection");
+                            Toast.makeText(getApplicationContext(),"Still no Internet Connection",Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+        return ad;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_screen);
-
 
         //get UI refs
         image = findViewById(R.id.image_detail);
@@ -60,6 +104,8 @@ public class DetailScreen extends AppCompatActivity {
         linearLayout = findViewById(R.id.linear_section);
         shareBtn = findViewById(R.id.share_button_detail);
         setVoteButtonListener();
+
+        registerReceiver(broadcastReceiver, new IntentFilter(NetworkBroadcastReceiver.NO_COMS_BROADCAST));
 
         //A) This Activity may either be called by the MainActivity ( if its a deeplink with question_id)
         //B) or may be called by QuestionsListFragment
@@ -103,7 +149,6 @@ public class DetailScreen extends AppCompatActivity {
                 shareDialog.show(getSupportFragmentManager(),"share_dialog");
             }
         });
-
     }
 
     public JsonObjectRequest buildGetQuestionRequest(final int questionId){

@@ -1,6 +1,8 @@
 package projects.blissrecruitment.sbp.blissballot;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
@@ -35,6 +37,13 @@ public class BlissApiSingleton  {
             mInstance = new BlissApiSingleton(context);
         }
         return mInstance;
+    }
+
+    public static boolean isConnected(Context ctx){
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
     public RequestQueue getRequestQueue() {

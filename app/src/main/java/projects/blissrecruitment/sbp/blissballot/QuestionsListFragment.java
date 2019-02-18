@@ -1,6 +1,8 @@
 package projects.blissrecruitment.sbp.blissballot;
 
 import android.app.Activity;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -68,6 +70,7 @@ public class QuestionsListFragment extends ListFragment {
     private int currentOffset = 0;
     private String filter = "";
     public static final String COMS_ID = "list_fragment_id";
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,

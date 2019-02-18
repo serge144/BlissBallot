@@ -9,7 +9,8 @@ import android.util.Log;
 
 public class NetworkBroadcastReceiver extends BroadcastReceiver {
     public static final String CONNECTIVITY_CHANGE = "android.net.conn.CONNECTIVITY_CHANGE";
-    public static final String SHOW_NO_CONNECTION_DIALOG = "com.blissrecruitment.broadcast.SHOW_NO_CONNECTION_DIALOG";
+    public static final String NO_COMS_BROADCAST = "com.blissrecruitment.broadcast.NO_COMS_BROADCAST";
+
     @Override
     public void onReceive(Context context, Intent intent) {
         Log.d("APP_DEBUG","[BROADCAST-RECEIVER] Got action: " + intent.getAction());
@@ -19,11 +20,11 @@ public class NetworkBroadcastReceiver extends BroadcastReceiver {
             if (networkInfo != null && networkInfo.getDetailedState() == NetworkInfo.DetailedState.CONNECTED) {
                 Log.d("APP_DEBUG", "[CONNECTION] Connected");
             } else if (networkInfo != null && networkInfo.getDetailedState() == NetworkInfo.DetailedState.DISCONNECTED) {
-                Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection :(");
+                Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection");
 
-               // Intent i = new Intent();
-               // i.setAction(SHOW_NO_CONNECTION_DIALOG);
-               // context.sendBroadcast(i);
+                //@url https://trinitytuts.com/pass-data-from-broadcast-receiver-to-activity-without-reopening-activity/
+                Intent i = new Intent(NO_COMS_BROADCAST);
+                context.sendBroadcast(i);
             }
         }
     }

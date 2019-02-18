@@ -1,6 +1,8 @@
 package projects.blissrecruitment.sbp.blissballot;
 
 import android.Manifest;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -44,6 +46,33 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     private Uri deepLinkUri;
     public static final String COMS_ID = "main_activity_id";
     public static final int DEEP_LINK_DIRECT_CODE = 44;
+    public static boolean isActive = true; //used to determine if this Activity is active or paused
+
+    /*This broadcast is used to receive messages from the NetworkBroadcastReceiver
+    *If the NBR detects no internet connection, then this local receiver receives the broadcast and sets a No-Coms Dialog
+    *@url https://trinitytuts.com/pass-data-from-broadcast-receiver-to-activity-without-reopening-activity/
+    **/
+    BroadcastReceiver broadcastReceiver =  new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d("APP_DEBUG", "[BROADCAST-RECEIVER-MAIN] Received action on Main:"+intent.getAction());
+            if(isActive && intent.getAction().equals(NetworkBroadcastReceiver.NO_COMS_BROADCAST)) {
+                buildNoComsDialog().show();
+            }
+        }
+    };
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActive = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActive = false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,8 +87,9 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
 
         NetworkBroadcastReceiver nbr = new NetworkBroadcastReceiver();
         IntentFilter filter = new IntentFilter();
-        filter.addAction("android.net.conn.CONNECTIVITY_CHANGE");
+        filter.addAction(NetworkBroadcastReceiver.CONNECTIVITY_CHANGE);
         registerReceiver(nbr,filter);
+        registerReceiver(broadcastReceiver, new IntentFilter(NetworkBroadcastReceiver.NO_COMS_BROADCAST));
 
         //set initial load screen fragment
         loadFragment = new BlankFragment();
@@ -74,9 +104,15 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             isDeepLink = true;
 
         //make request to health check
-        checkServerRequest = buildCheckServerRequest();
-        BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
+        if(BlissApiSingleton.isConnected(getApplicationContext())){
+            checkServerRequest = buildCheckServerRequest();
+            BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
+        }
+    }
 
+    public void reCheckServer(){
+        StringRequest checkServerRequest = buildCheckServerRequest();
+        BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
     }
 
     public StringRequest buildCheckServerRequest(){
@@ -134,7 +170,6 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(requestCode == DEEP_LINK_DIRECT_CODE){
-
             Log.i("APP_DEBUG","[INFO] Returned from Detail DEEP LINK to caller activity, resuming normal flow.");
             setListFragment(null);
         }
@@ -183,6 +218,37 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
                 break;
         }
         return super.onOptionsItemSelected(item);
+    }
+
+    public AlertDialog buildNoComsDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Connectivity");
+        builder.setMessage("Please establish an internet connection.");
+        builder.setPositiveButton("Retry",null);
+        final AlertDialog ad = builder.create();
+        ad.setCanceledOnTouchOutside(false);
+        ad.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button button = ((AlertDialog) dialog).getButton(android.app.AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+
+                    @Override
+                    public void onClick(View view) {
+                        if(BlissApiSingleton.isConnected(getApplicationContext())){
+                            if(loadFragment.isVisible())
+                                reCheckServer();
+                            ad.dismiss();
+                        }else{
+                            Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection");
+                            Toast.makeText(getApplicationContext(),"Still no Internet Connection",Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+        return ad;
     }
 
     @Override
