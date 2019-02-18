@@ -13,10 +13,12 @@ public class BlissApiSingleton  {
 
     public static String BLISS_HEALTH_REQUEST = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/health";
     public static final String BLISS_BASE_ALL_QUESTIONS_REQUEST = "https://private-618d57-blissrecruitmentapi.apiary-mock.com/questions";
+    public static final String ACTIVITY_CALLER = "activity_caller_id";
 
     private static BlissApiSingleton mInstance;
     private RequestQueue mRequestQueue;
     private static Context mCtx;
+
 
     private BlissApiSingleton(Context context){
         mCtx = context;
@@ -41,6 +43,5 @@ public class BlissApiSingleton  {
         Log.d("APP_DEBUG","[REQUEST]" + req.toString());
         getRequestQueue().add(req);
     }
-
 
 }

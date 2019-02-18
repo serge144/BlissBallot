@@ -31,7 +31,9 @@
                 <data android:scheme="blissrecruitment"/>
             </intent-filter>
         </activity>
-        <activity android:name=".DetailScreen"></activity>
+        <activity android:name=".DetailScreen">
+
+        </activity>
     </application>
 
 </manifest>

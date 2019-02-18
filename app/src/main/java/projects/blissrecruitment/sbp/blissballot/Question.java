@@ -8,6 +8,8 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+
 public class Question implements Parcelable  {
 
     private int id;
@@ -133,7 +135,6 @@ public class Question implements Parcelable  {
 
     }
 
-
     public JSONObject toJSON(){
 
         JSONObject jo = new JSONObject();
@@ -150,4 +151,40 @@ public class Question implements Parcelable  {
 
         return jo;
     }
+
+    public static ArrayList<Question> processJSONArray(JSONArray response){
+
+        ArrayList<Question> responseQuestions = new ArrayList<Question>();
+        for(int i = 0 ; i < response.length() ; i++){
+            JSONObject questionObject = null;
+            try{
+                questionObject = response.getJSONObject(i);
+                Question q = Question.processJSONObject(questionObject);
+                responseQuestions.add(q);
+            }catch (JSONException jex){
+                jex.printStackTrace();
+                //TODO handle exception
+            }
+        }
+        return responseQuestions;
+    }
+
+    public static Question processJSONObject(JSONObject questionObject){
+        Question q = null;
+        try{
+            int id = questionObject.getInt("id");
+            String text = questionObject.getString("question");
+            String img_url = questionObject.getString("image_url");
+            String thumb_url = questionObject.getString("thumb_url");
+            String date = questionObject.getString("published_at");
+            JSONArray choices = questionObject.getJSONArray("choices");
+            q = new Question(id,text,img_url,thumb_url,date,choices);
+        }catch (JSONException jexc){
+            jexc.printStackTrace();
+            //TODO handle exception
+        }
+        return q;
+
+    }
+
 }

@@ -25,6 +25,7 @@ import android.widget.Toast;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.squareup.picasso.Picasso;
 
@@ -40,27 +41,52 @@ public class DetailScreen extends AppCompatActivity {
     private LinearLayout linearLayout;
     private ArrayList<CheckBox> choicesCheckboxs = new ArrayList<CheckBox>();
 
+    private ImageView image;
+    private Button voteBtn;
+    private TextView questionText;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_screen);
 
-        //get the Question from the list activity
-        Bundle b  = getIntent().getBundleExtra("bundle");
-        question = b.getParcelable("question");
-        Log.d("APP_DEBUG","[INFO] Detail view, question id:" + question.getId());
+        //get UI refs
+        image = findViewById(R.id.image_detail);
+        voteBtn = findViewById(R.id.vote_button);
+        questionText = findViewById(R.id.question_text_detail);
+        linearLayout = findViewById(R.id.linear_section);
+        setVoteButtonListener();
+
+        //A) This Activity may either be called by the MainActivity ( if its a deeplink with question_id)
+        //B) or may be called by QuestionsListFragment
+        //if A) then we must request question data, if B) we already have that question data, no need request
+        Intent intent = getIntent();
+        String callerId = intent.getExtras().getString(BlissApiSingleton.ACTIVITY_CALLER);
+        switch (callerId) {
+            case QuestionsListFragment.COMS_ID:
+                Bundle b  = intent.getBundleExtra("bundle");
+                question = b.getParcelable("question");
+                buildDetailView();
+                break;
+            case MainActivity.COMS_ID:
+                int questionId = intent.getExtras().getInt("question_id");
+                JsonObjectRequest questionRequest = buildGetQuestionRequest(questionId);
+                BlissApiSingleton.getInstance(this).addToRequestQueue(questionRequest);
+                break;
+        }
+
+        //Log.d("APP_DEBUG","[INFO] Detail view, question id:" + question.getId());
 
         //change actionbar title and set a return button
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Question Detail");
         actionBar.setDisplayHomeAsUpEnabled(true); //return button
 
-        //get UI refs
-        ImageView image = findViewById(R.id.image_detail);
-        Button voteBtn = findViewById(R.id.vote_button);
-        TextView questionText = findViewById(R.id.question_text_detail);
-        setVoteButtonListener(voteBtn);
-        linearLayout = findViewById(R.id.linear_section);
+
+
+    }
+
+    public void buildDetailView(){
 
         //insert the choices in RadioGroup
         buildRadioGroup(question.getChoices());
@@ -70,12 +96,32 @@ public class DetailScreen extends AppCompatActivity {
         Picasso.get().load(question.getImgUrl()).transform(new CircleTransformation(45,0)).into(image);
         questionText.setText(question.getText());
 
-
-
     }
 
-    private void setVoteButtonListener(Button btn){
-        btn.setOnClickListener(new View.OnClickListener() {
+    public JsonObjectRequest buildGetQuestionRequest(final int questionId){
+        String baseUrl = BlissApiSingleton.BLISS_BASE_ALL_QUESTIONS_REQUEST;
+        String url = baseUrl + "/" + questionId;
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        question = Question.processJSONObject(response);
+                        buildDetailView();
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+
+                    }
+                });
+        return jsonObjectRequest;
+    }
+
+    private void setVoteButtonListener(){
+        voteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 CheckBox choice = someChoiceIsChecked();
@@ -145,7 +191,6 @@ public class DetailScreen extends AppCompatActivity {
                         CheckBox clickedCB = (CheckBox)v.findViewById(R.id.vote_checkbox);
                         if(clickedCB.isChecked())
                             cleanSelectionCheckBox(clickedCB.getTag().toString());
-
                     }
                 });
 

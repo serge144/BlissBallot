@@ -1,11 +1,15 @@
 package projects.blissrecruitment.sbp.blissballot;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
@@ -31,6 +35,22 @@ import java.util.ArrayList;
  */
 public class QuestionsListFragment extends ListFragment {
 
+    //=======================================================
+    OnFirstResponseListener mCallback;
+
+    public interface OnFirstResponseListener{
+        public void onFirstResponseListener();
+    }
+
+    public void setOnFirstResponseListener(Activity activity){
+        try{
+            mCallback = (OnFirstResponseListener)activity;
+        }catch (ClassCastException e){
+            throw new ClassCastException(activity.toString() + " must implement OnFirstResponseListener");
+        }
+    }
+
+    //=======================================================
 
     public QuestionsListFragment() {
         // Required empty public constructor
@@ -47,6 +67,7 @@ public class QuestionsListFragment extends ListFragment {
     private int limit = 10;
     private int currentOffset = 0;
     private String filter = "";
+    public static final String COMS_ID = "list_fragment_id";
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -88,8 +109,9 @@ public class QuestionsListFragment extends ListFragment {
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
-                updateListView(processJSONArray(response));
+                updateListView(Question.processJSONArray(response));//converts JSON to arrayList of questions and updates the list
                 currentOffset = currentOffset + response.length();
+                mCallback.onFirstResponseListener();
                 fetchingRecords = false; //used for the scroll-bottom detection of the list view
             }
         }, new Response.ErrorListener() {
@@ -103,27 +125,9 @@ public class QuestionsListFragment extends ListFragment {
         return request;
     }
 
-    private ArrayList<Question> processJSONArray(JSONArray response){
 
-        ArrayList<Question> responseQuestions = new ArrayList<Question>();
-        for(int i = 0 ; i < response.length() ; i++){
-            JSONObject questionObject = null;
-            try{
-                questionObject = response.getJSONObject(i);
-                int id = questionObject.getInt("id");
-                String text = questionObject.getString("question");
-                String img_url = questionObject.getString("image_url");
-                String thumb_url = questionObject.getString("thumb_url");
-                String date = questionObject.getString("published_at");
-                JSONArray choices = questionObject.getJSONArray("choices");
-                Question q = new Question(id,text,img_url,thumb_url,date,choices);
-                responseQuestions.add(q);
-            }catch (JSONException jex){
-                jex.printStackTrace();
-            }
-        }
-        return responseQuestions;
-    }
+
+
 
     /*
         Updates the List view with new records
@@ -195,30 +199,6 @@ public class QuestionsListFragment extends ListFragment {
         } ;
     }
 
-    public void setSearchCleanButtonListener(){
-        int searchCloseButtonId = searchView.getContext().getResources()
-                .getIdentifier("android:id/search_close_btn", null, null);
-        ImageView closeButton = (ImageView) this.searchView.findViewById(searchCloseButtonId);
-        closeButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                resetList();
-            }
-        });
-    }
-
-    public void resetList(){
-        listView.setSelection(0);
-        firstSearch = true;
-        filter = "";
-        Log.d("APP_DEBUG","[INFO] Blank query, reseting list: fetching the first 10 records");
-        currentOffset = 0;
-        searchView.setQuery("",false);
-        JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter); //update the list with first 10 recs
-        BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
-        //searchView.setQuery("",true); //loads the first 10
-    }
-
     public void processDeepLinkBundle(Bundle bundle){
 
         if(bundle != null && bundle.containsKey("question_filter")){
@@ -230,6 +210,10 @@ public class QuestionsListFragment extends ListFragment {
             }else
                 filter = "";
         }
+    }
+
+    public String getFilter(){
+        return filter;
     }
 
     @Override
@@ -244,7 +228,10 @@ public class QuestionsListFragment extends ListFragment {
         b.putParcelable("question",q);
         Intent detailIntent = new Intent(getActivity(),DetailScreen.class);
         detailIntent.putExtra("bundle",b);
+        detailIntent.putExtra(BlissApiSingleton.ACTIVITY_CALLER,COMS_ID);
         startActivity(detailIntent);
-
     }
+
+
+
 }
