@@ -8,7 +8,13 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
 
 public class Question implements Parcelable  {
 
@@ -17,7 +23,9 @@ public class Question implements Parcelable  {
     private String img_url;
     private String thumb_url;
     private String published_at;
+    private Calendar publishDate;
     private JSONArray choices;
+    private int maxVotes;
 
 
     public Question(int id, String text, String img_url, String thumb_url, String published_at, JSONArray choices)
@@ -28,8 +36,14 @@ public class Question implements Parcelable  {
         this.thumb_url = thumb_url;
         this.published_at = published_at;
         this.choices = choices;
+        this.maxVotes = 0;
+
+        setCalendar();
+        setMaxVotes();
     }
 
+    //Used to transfer question data between ListFragment -> DetailView
+    //this way we dont need to make request for the question
     public Question(Parcel parcel){
         this.id = parcel.readInt();
         this.text = parcel.readString();
@@ -42,6 +56,54 @@ public class Question implements Parcelable  {
             //TODO take care of error
             e.printStackTrace();
         }
+
+        setCalendar();
+        setMaxVotes();
+    }
+
+    //the maxvotes to display a count progress bar for each choice 100*(votes/maxVotes)
+    public int getMaxVotes(){
+        return maxVotes;
+    };
+
+    public void setMaxVotes(){
+
+        for(int i = 0 ; i < choices.length() ; i ++){
+            try {
+                JSONObject jobj = (JSONObject)choices.get(i);
+                int mVotes;
+                if((mVotes = jobj.getInt("votes")) > maxVotes)
+                    maxVotes = mVotes;
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+
+    public void setCalendar(){
+        DateFormat df = new SimpleDateFormat(BlissApiSingleton.BLISS_API_DATE_FORMAT);
+        publishDate = Calendar.getInstance();
+        try {
+            publishDate.setTime(df.parse(published_at));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public String getDisplayDateString(Calendar calendar){
+
+        String mString = calendar.getDisplayName(Calendar.MONTH,Calendar.SHORT,Locale.getDefault());//,Calendar.SHORT, Locale.getDefault());
+        mString = mString +" " + calendar.get(Calendar.DAY_OF_MONTH);
+        mString = mString +", " + calendar.get(Calendar.YEAR)
+                + " at " + calendar.get(Calendar.HOUR_OF_DAY)
+                +"h"+calendar.get(Calendar.MINUTE);
+        return mString;
+
+    }
+
+    public Calendar getCalendar(){
+        return publishDate;
     }
 
     public int getId() {

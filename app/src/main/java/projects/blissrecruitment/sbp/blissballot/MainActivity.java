@@ -42,7 +42,7 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     private BlankFragment loadFragment;
     private QuestionsListFragment listFragment;
     private boolean isDeepLink = false;
-    private boolean gotFirstResponse = false;
+    private boolean gotFirstResponse = false; //used for the share btn, wait until get first response and then it can be used
     private Uri deepLinkUri;
     public static final String COMS_ID = "main_activity_id";
     public static final int DEEP_LINK_DIRECT_CODE = 44;
@@ -61,18 +61,6 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             }
         }
     };
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-        isActive = true;
-    }
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-        isActive = false;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -110,11 +98,15 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         }
     }
 
+    /*Builds and sends server health request
+     * */
     public void reCheckServer(){
         StringRequest checkServerRequest = buildCheckServerRequest();
         BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
     }
 
+    /*Builds the request for the check health server request
+    * */
     public StringRequest buildCheckServerRequest(){
 
         StringRequest healthRequest = new StringRequest(Request.Method.GET, BlissApiSingleton.BLISS_HEALTH_REQUEST,
@@ -130,25 +122,29 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
                                 if(isDeepLink) {
                                     processDeepLink();
                                 }else
-                                    setListFragment(null);
+                                    setListFragment(null); //null means that we dont need to pass anything onto listfragment (no deeplink)
                             }else{
                                 loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.INVISIBLE);
                                 retryDialog();
                             }
                         } catch (JSONException e) {
                             e.printStackTrace(); //TODO handle this json error
+                            Toast.makeText(getApplicationContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
                 //TODO handle this volley error
+                Toast.makeText(getApplicationContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
             }
         });
 
         return healthRequest;
     }
 
+    /*Process both possible Deep links: question_filter and question_id
+     * */
     public void processDeepLink(){
 
         if(deepLinkUri.getQueryParameterNames().contains("question_filter")){
@@ -167,6 +163,10 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         }
     }
 
+    /*With Deep link the flow is Main -> Detail
+      The normal flow however is Main -> List -> Detail
+     *So if the user goes back from Detail, we must set list fragment and fetch records
+     *  */
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         if(requestCode == DEEP_LINK_DIRECT_CODE){
@@ -175,6 +175,10 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         }
     }
 
+    /*
+     *Sets the list fragment and passes a @param bundle in case it's a deep link of type FILTER
+     * this bundle contains the query to be searched in the list view
+      *  */
     public void setListFragment(Bundle bundle){
         listFragment = new QuestionsListFragment();
         if(bundle != null)
@@ -185,6 +189,9 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             //@url https://medium.com/@elye.project/handling-illegalstateexception-can-not-perform-this-action-after-onsaveinstancestate-d4ee8b630066
     }
 
+    /*
+     *Show dialog if server is not responding
+     *  */
     public void retryDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage("Retry connection").setTitle("Server Connectivity");
@@ -199,27 +206,9 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         dialog.show();
     }
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_main, menu);
-        return super.onCreateOptionsMenu(menu);
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-
-        switch(item.getItemId()){
-            case R.id.menu_share:
-                if(gotFirstResponse){
-                    String currentFilter = listFragment.getFilter();
-                    ShareDialog shareDialog = ShareDialog.newInstance(currentFilter,ShareDialog.SHARE_FILTER_MODE);
-                    shareDialog.show(getSupportFragmentManager(),"share_dialog");
-                }
-                break;
-        }
-        return super.onOptionsItemSelected(item);
-    }
-
+    /*
+     *If theres no internet connection then build a no coms dialog
+     *  */
     public AlertDialog buildNoComsDialog(){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
@@ -252,6 +241,29 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+
+        switch(item.getItemId()){
+            case R.id.menu_share:
+                if(gotFirstResponse){ // if already got a response from ListFragment then we can use Share btn
+                    String currentFilter = listFragment.getFilter();
+                    ShareDialog shareDialog = ShareDialog.newInstance(currentFilter,ShareDialog.SHARE_FILTER_MODE);
+                    shareDialog.show(getSupportFragmentManager(),"share_dialog");
+                }
+                break;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    /*When the ListFragment gets its first records, it sets variable to true
+    * */
+    @Override
     public void onFirstResponseListener() {
         gotFirstResponse = true;
     }
@@ -263,5 +275,17 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             questionListFragment.setOnFirstResponseListener(this);
         }
         super.onAttachFragment(fragment);
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        isActive = true;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        isActive = false;
     }
 }

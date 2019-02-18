@@ -37,6 +37,10 @@ import java.util.ArrayList;
  */
 public class QuestionsListFragment extends ListFragment {
 
+    /*
+    * This interface is used to attach some component that wishes to listen for the First Response Event
+    * for example, the MainActivity implements this interface, this way it
+    * */
     //=======================================================
     OnFirstResponseListener mCallback;
 
@@ -105,6 +109,8 @@ public class QuestionsListFragment extends ListFragment {
         return v;
     }
 
+    /*  Builds the request to fetch 10 questions, always controlling the offset based on the number of responses and the current filter
+    * */
     public JsonArrayRequest buildGetQuestionsRequest(Integer limit, Integer offset, String filter){
 
         String baseUrl = BlissApiSingleton.BLISS_BASE_ALL_QUESTIONS_REQUEST;
@@ -113,7 +119,7 @@ public class QuestionsListFragment extends ListFragment {
             @Override
             public void onResponse(JSONArray response) {
                 updateListView(Question.processJSONArray(response));//converts JSON to arrayList of questions and updates the list
-                currentOffset = currentOffset + response.length();
+                currentOffset = currentOffset + response.length(); //if we got 5 records when we have already 10, then offset = 15
                 mCallback.onFirstResponseListener();
                 fetchingRecords = false; //used for the scroll-bottom detection of the list view
             }
@@ -198,6 +204,9 @@ public class QuestionsListFragment extends ListFragment {
         } ;
     }
 
+    /*  When a question_filter Deeplink is clicked, the main_activity receives it, and passes onto this Fragment
+        in a Bundle
+    * */
     public void processDeepLinkBundle(Bundle bundle){
 
         if(bundle != null && bundle.containsKey("question_filter")){
@@ -215,6 +224,10 @@ public class QuestionsListFragment extends ListFragment {
         return filter;
     }
 
+    /*
+    * When a question is clicked, we transfer the questions data to the Detail View on a bundle
+    * instead of making another request
+    * */
     @Override
     public void onListItemClick(ListView l, View v, int position, long id) {
         super.onListItemClick(l, v, position, id);

@@ -7,6 +7,11 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
+/*  This is BroadCastReceiver, which basically listens to events/actions on system, for
+*   example when the internet connection status changes, this Receiver gets triggered and informs other
+*   components across the app such as the MainActivity
+* */
+
 public class NetworkBroadcastReceiver extends BroadcastReceiver {
     public static final String CONNECTIVITY_CHANGE = "android.net.conn.CONNECTIVITY_CHANGE";
     public static final String NO_COMS_BROADCAST = "com.blissrecruitment.broadcast.NO_COMS_BROADCAST";

@@ -22,6 +22,7 @@ import android.widget.CompoundButton;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ProgressBar;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
 import android.widget.TextView;
@@ -49,7 +50,7 @@ public class DetailScreen extends AppCompatActivity {
     private ImageView image;
     private Button voteBtn;
     private ImageButton shareBtn;
-    private TextView questionText;
+    private TextView questionText,dateText;
 
     /*This broadcast is used to receive messages from the NetworkBroadcastReceiver
      *If the NBR detects no internet connection, then this local receiver receives the broadcast and sets a No-Coms Dialog
@@ -65,33 +66,6 @@ public class DetailScreen extends AppCompatActivity {
         }
     };
 
-    public AlertDialog buildNoComsDialog(){
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Connectivity");
-        builder.setMessage("Please establish an internet connection.");
-        builder.setPositiveButton("Retry",null);
-        final AlertDialog ad = builder.create();
-        ad.setCanceledOnTouchOutside(false);
-        ad.setOnShowListener(new DialogInterface.OnShowListener() {
-            @Override
-            public void onShow(DialogInterface dialog) {
-                Button button = ((AlertDialog) dialog).getButton(android.app.AlertDialog.BUTTON_POSITIVE);
-                button.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        if(BlissApiSingleton.isConnected(getApplicationContext())){
-                            ad.dismiss();
-                        }else{
-                            Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection");
-                            Toast.makeText(getApplicationContext(),"Still no Internet Connection",Toast.LENGTH_SHORT).show();
-                        }
-                    }
-                });
-            }
-        });
-        return ad;
-    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -101,6 +75,7 @@ public class DetailScreen extends AppCompatActivity {
         image = findViewById(R.id.image_detail);
         voteBtn = findViewById(R.id.vote_button);
         questionText = findViewById(R.id.question_text_detail);
+        dateText = findViewById(R.id.date_text);
         linearLayout = findViewById(R.id.linear_section);
         shareBtn = findViewById(R.id.share_button_detail);
         setVoteButtonListener();
@@ -132,6 +107,10 @@ public class DetailScreen extends AppCompatActivity {
 
     }
 
+    /*
+     *  Builds some components of the DetailView
+     *  Also used Picasso library to load image.
+     * */
     public void buildDetailView(){
 
         //insert the choices in RadioGroup
@@ -141,6 +120,7 @@ public class DetailScreen extends AppCompatActivity {
         Log.d("APP_DEBUG","[REQUEST-PICASSO] Url: "+ question.getImgUrl());
         Picasso.get().load(question.getImgUrl()).transform(new CircleTransformation(45,0)).into(image);
         questionText.setText(question.getText());
+        dateText.setText(question.getDisplayDateString(question.getCalendar()));
 
         shareBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -151,6 +131,10 @@ public class DetailScreen extends AppCompatActivity {
         });
     }
 
+    /*
+     *  This request is used in case a DEEPLINK was used and we dont have the question data from previous activity,
+     *  so we must fetch
+     * */
     public JsonObjectRequest buildGetQuestionRequest(final int questionId){
         String baseUrl = BlissApiSingleton.BLISS_BASE_ALL_QUESTIONS_REQUEST;
         String url = baseUrl + "/" + questionId;
@@ -173,6 +157,9 @@ public class DetailScreen extends AppCompatActivity {
         return jsonObjectRequest;
     }
 
+    /*
+     *  When this button is pressed, updates the vote count of selected choice, builds the put request, and requests
+     * */
     private void setVoteButtonListener(){
         voteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -191,6 +178,9 @@ public class DetailScreen extends AppCompatActivity {
         });
     }
 
+    /*
+     *  Verifies if some checkbox is currently checked
+     * */
     private CheckBox someChoiceIsChecked(){
         for(CheckBox cb : choicesCheckboxs)
             if(cb.isChecked())
@@ -198,12 +188,17 @@ public class DetailScreen extends AppCompatActivity {
         return null;
     }
 
+    /*  Updates the vote count of the choice
+     *
+     * */
     private void updateChoiceVoteCount(CheckBox cb){
         String name = cb.getText().toString();
         question.vote(name);
-
     }
 
+    /*  Builds the request to update the corresponding question currently on this DetailView via API
+     *
+     * */
     private JsonObjectRequest buildPutQuestionRequest(){
 
         String baseUrl = BlissApiSingleton.BLISS_BASE_ALL_QUESTIONS_REQUEST;
@@ -213,6 +208,9 @@ public class DetailScreen extends AppCompatActivity {
             @Override
             public void onResponse(JSONObject response) {
                 Log.d("APP_DEBUG","[RESPONSE]" + response.toString());
+                if(response != null){
+                    Toast.makeText(getApplicationContext(),"Vote updated.",Toast.LENGTH_SHORT).show();
+                }
             }
         }, new Response.ErrorListener() {
             @Override
@@ -223,10 +221,13 @@ public class DetailScreen extends AppCompatActivity {
         return jrequest;
     }
 
-
+    /*  Builds the CheckBoxes for each Choice
+    *   Not actually a radio group, but functions the same way, but with CheckBoxes
+    * */
     private void buildRadioGroup(JSONArray choices){
 
         //radioView.setOrientation(RadioGroup.VERTICAL);
+        int maxVotes = question.getMaxVotes();
         LayoutInflater li = (LayoutInflater) getApplicationContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         for(int i = 0 ; i < choices.length() ; i++){
             try {
@@ -235,6 +236,9 @@ public class DetailScreen extends AppCompatActivity {
                 int votes = choice.getInt("votes");
                 View v = li.inflate(R.layout.item_choice,null);
                 ((TextView)v.findViewById(R.id.count_value)).setText(Integer.toString(votes));
+                ProgressBar pb = v.findViewById(R.id.count_progress);
+                float progress = 100*((float)votes/maxVotes);
+                pb.setProgress(Math.round(progress));
                 CheckBox cb = v.findViewById(R.id.vote_checkbox);
                 cb.setTag(name + "-" + i);
                 cb.setText(name);
@@ -256,6 +260,8 @@ public class DetailScreen extends AppCompatActivity {
         }
     }
 
+    /*  Works as a RadioGroup, deselect the other checkboxes
+    * */
     private void cleanSelectionCheckBox(String tag) {
         for (CheckBox cb : choicesCheckboxs) {
             if (!cb.getTag().equals(tag)) {
@@ -264,6 +270,40 @@ public class DetailScreen extends AppCompatActivity {
         }
     }
 
+    /*  Build the Dialog for this activity to when there is no Internet Connection
+    *
+    * */
+    public AlertDialog buildNoComsDialog(){
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Connectivity");
+        builder.setMessage("Please establish an internet connection.");
+        builder.setPositiveButton("Retry",null);
+        final AlertDialog ad = builder.create();
+        ad.setCanceledOnTouchOutside(false);
+        ad.setOnShowListener(new DialogInterface.OnShowListener() {
+            @Override
+            public void onShow(DialogInterface dialog) {
+                Button button = ((AlertDialog) dialog).getButton(android.app.AlertDialog.BUTTON_POSITIVE);
+                button.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View view) {
+                        if(BlissApiSingleton.isConnected(getApplicationContext())){
+                            ad.dismiss();
+                        }else{
+                            Log.d("APP_DEBUG", "[CONNECTION] No Internet Connection");
+                            Toast.makeText(getApplicationContext(),"Still no Internet Connection",Toast.LENGTH_SHORT).show();
+                        }
+                    }
+                });
+            }
+        });
+        return ad;
+    }
+
+    /**Go back arrow, goes back to List fragment to list all question
+     *
+     */
     @Override
     public boolean onSupportNavigateUp() {
         finish();

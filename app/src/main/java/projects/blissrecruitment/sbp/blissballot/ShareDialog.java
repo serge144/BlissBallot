@@ -12,12 +12,14 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 
+import org.json.JSONException;
 import org.json.JSONObject;
 
 public class ShareDialog extends DialogFragment {
@@ -57,6 +59,9 @@ public class ShareDialog extends DialogFragment {
         return new AlertDialog.Builder(getActivity()).create();
     }
 
+    /*
+    * Builds the share dialog when in the ListFragment
+     */
     public AlertDialog buildShareQuestionDialog(final int questionId){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -89,6 +94,9 @@ public class ShareDialog extends DialogFragment {
         return builder.create();
     }
 
+    /*
+     * Builds the share dialog when in the ListFragment (search)
+     */
     public AlertDialog buildShareFilterDialog(final String query){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
@@ -127,7 +135,11 @@ public class ShareDialog extends DialogFragment {
         return builder.create();
     }
 
-    public JsonObjectRequest buildShareRequest(String email,String deeplink){
+    /*
+    * Builds a request to the /share endpoint using the apropriate deeplink
+    * deeplink is either blissrecruitment://question_filter= OR blissrecruitment://question_id=
+    * */
+    public JsonObjectRequest buildShareRequest(String email, final String deeplink){
         String baseUrl = BlissApiSingleton.SHARE_BASE_URL;
         String url = baseUrl + "?destination_email=" + email + "&content_url="+ deeplink;
         JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
@@ -135,12 +147,22 @@ public class ShareDialog extends DialogFragment {
                     @Override
                     public void onResponse(JSONObject response) {
                         Log.d("APP_DEBUG","[RESPONSE] "+ response.toString());
+                        try {
+                            if(response.getString("status").equals("OK")){
+                                Toast.makeText(getContext(),"Successfully Shared: "+ deeplink, Toast.LENGTH_SHORT).show();
+                            }else{
+                                Toast.makeText(getContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
                         // TODO: Handle error
+                        Toast.makeText(getContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
                     }
                 });
         return jsonObjectRequest;

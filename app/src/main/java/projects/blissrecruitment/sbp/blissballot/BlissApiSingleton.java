@@ -3,16 +3,15 @@ package projects.blissrecruitment.sbp.blissballot;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.support.v4.app.FragmentManager;
 import android.util.Log;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 
-import org.json.JSONObject;
-
-import java.util.Timer;
+/*
+*   Creates a unique RequestQueue across the whole app
+ */
 
 public class BlissApiSingleton  {
 
@@ -22,6 +21,7 @@ public class BlissApiSingleton  {
     public static final String BASE_DEEPLINK_QUESTION = "blissrecruitment://questions?question_id=";
     public static final String BASE_DEEPLINK_FILTER = "blissrecruitment://questions?question_filter=";
     public static final String ACTIVITY_CALLER = "activity_caller_id";
+    public static final String BLISS_API_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
 
     private static BlissApiSingleton mInstance;
     private RequestQueue mRequestQueue;
@@ -39,6 +39,9 @@ public class BlissApiSingleton  {
         return mInstance;
     }
 
+    /*
+    * Check if there's connection to the internet
+    * */
     public static boolean isConnected(Context ctx){
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);

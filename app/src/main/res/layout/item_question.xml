@@ -14,12 +14,12 @@
         android:layout_marginBottom="2dp"
         android:background="@drawable/white_shape">
 
-        <TextView
+       <!-- <TextView
             android:id="@+id/question_id"
             android:layout_width="26dp"
             android:layout_height="24dp"
-            android:layout_marginStart="16dp"
-            android:layout_marginLeft="16dp"
+            android:layout_marginStart="4dp"
+            android:layout_marginLeft="4dp"
             android:background="@drawable/blue_rectangle_shape"
             android:gravity="center"
             android:text="99"
@@ -27,8 +27,9 @@
             android:textColor="@android:color/white"
             android:textSize="11sp"
             android:textStyle="bold"
+            android:visibility="invisible"
             app:layout_constraintStart_toEndOf="@+id/thumb_preview"
-            app:layout_constraintTop_toTopOf="parent" />
+            app:layout_constraintTop_toTopOf="parent" />-->
 
         <ImageView
             android:id="@+id/thumb_preview"
@@ -43,19 +44,22 @@
             android:id="@+id/question_text"
             android:layout_width="238dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="12dp"
-            android:layout_marginLeft="12dp"
+            android:layout_marginStart="8dp"
+            android:layout_marginLeft="8dp"
+            android:layout_marginTop="4dp"
             android:text="Question"
-            app:layout_constraintStart_toEndOf="@+id/question_id"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@+id/thumb_preview"
             app:layout_constraintTop_toTopOf="parent" />
 
         <TextView
-            android:id="@+id/textView2"
-            android:layout_width="83dp"
+            android:id="@+id/question_date"
+            android:layout_width="169dp"
             android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:layout_marginEnd="16dp"
-            android:layout_marginRight="16dp"
+            android:layout_marginTop="8dp"
+            android:layout_marginEnd="8dp"
+            android:layout_marginRight="8dp"
+            android:gravity="end"
             android:text="Date"
             android:textColor="#89a1a1a1"
             app:layout_constraintEnd_toEndOf="parent"
