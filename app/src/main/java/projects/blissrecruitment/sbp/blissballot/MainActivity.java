@@ -197,7 +197,7 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
      *  */
     public void retryDialog(){
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setMessage("Retry connection").setTitle("Server Connectivity");
+        builder.setMessage("Retry connection").setTitle("Server not responding...");
         builder.setPositiveButton("Retry", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -206,6 +206,8 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
             }
         });
         AlertDialog dialog = builder.create();
+        dialog.setCanceledOnTouchOutside(false);
+
         dialog.show();
     }
 

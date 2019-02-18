@@ -12,8 +12,10 @@ import android.support.v4.app.DialogFragment;
 import android.text.InputType;
 import android.util.Log;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -24,6 +26,10 @@ import com.android.volley.toolbox.JsonObjectRequest;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+//TODO use only one buildShareDialog ( 2 is too much code )
 public class ShareDialog extends DialogFragment {
 
     public static final int SHARE_FILTER_MODE = 100;
@@ -78,29 +84,34 @@ public class ShareDialog extends DialogFragment {
 
     /*
     * Builds the share dialog when in the ListFragment
+    *
      */
     public AlertDialog buildShareQuestionDialog(final int questionId){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View v = inflater.inflate(R.layout.share_dialog,null);
+        builder.setView(v);
         builder.setTitle("Share");
         builder.setIcon(R.drawable.ic_share_blue);
 
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        final EditText input = new EditText(getContext());
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        input.setHint("Email");
-        input.setLayoutParams(lp);
+        final EditText email = v.findViewById(R.id.email_edit_text);
+        TextView uri = v.findViewById(R.id.uri_text);
+        String uriString = BlissApiSingleton.BASE_DEEPLINK_QUESTION + "" +questionId;
+        uri.setText(uriString);
 
-        builder.setView(input);
         builder.setPositiveButton("Share", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String email = input.getText().toString();
-                String deeplink =  "\"" + BlissApiSingleton.BASE_DEEPLINK_QUESTION + "" + questionId + "\"";
-                JsonObjectRequest shareQuestionRequest = buildShareRequest(email,deeplink);
-                BlissApiSingleton.getInstance(getContext()).addToRequestQueue(shareQuestionRequest);
+                String emailText = email.getText().toString();
+                if(isEmailValid(emailText)){
+                    String deeplink = "\"" + BlissApiSingleton.BASE_DEEPLINK_QUESTION + "" + questionId + "\"";
+                    JsonObjectRequest shareQuestionRequest = buildShareRequest(emailText,deeplink);
+                    BlissApiSingleton.getInstance(getContext()).addToRequestQueue(shareQuestionRequest);
+                }else{
+                    mCallBack.onShareListener("Please insert a valid email");
+                }
+
             }
         }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -117,31 +128,29 @@ public class ShareDialog extends DialogFragment {
     public AlertDialog buildShareFilterDialog(final String query){
 
         AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
+        LayoutInflater inflater = getActivity().getLayoutInflater();
+        View v = inflater.inflate(R.layout.share_dialog,null);
+        builder.setView(v);
         builder.setTitle("Share");
         builder.setIcon(R.drawable.ic_share_blue);
 
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT,
-                LinearLayout.LayoutParams.MATCH_PARENT);
-        final EditText input = new EditText(getContext());
-        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS | InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS);
-        input.setHint("Email");
-        input.setLayoutParams(lp);
-        builder.setView(input);
+        final EditText email = v.findViewById(R.id.email_edit_text);
+        TextView uri = v.findViewById(R.id.uri_text);
+        String uriString = BlissApiSingleton.BASE_DEEPLINK_FILTER + "" +query;
+        uri.setText(uriString);
 
-        String message= "";
-        if(query.equals(""))
-            message = "Displaying the first results with no query, do you wish to share?";
-        else
-            message = "Currently showing results for query: " + query + ".\r\n Do you wish to share?";
-        builder.setMessage(message);
         builder.setPositiveButton("Share", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                String email = input.getText().toString();
-                String deeplink = "\"" + BlissApiSingleton.BASE_DEEPLINK_FILTER + "" + query + "\"";
-                JsonObjectRequest shareQuestionRequest = buildShareRequest(email,deeplink);
-                BlissApiSingleton.getInstance(getContext()).addToRequestQueue(shareQuestionRequest);
+                String emailText = email.getText().toString();
+                if(isEmailValid(emailText)){
+                    String deeplink = "\"" + BlissApiSingleton.BASE_DEEPLINK_FILTER + "" + query + "\"";
+                    JsonObjectRequest shareQuestionRequest = buildShareRequest(emailText,deeplink);
+                    BlissApiSingleton.getInstance(getContext()).addToRequestQueue(shareQuestionRequest);
+                }else{
+                    mCallBack.onShareListener("Please insert a valid email");
+                }
+
             }
         }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
             @Override
@@ -185,6 +194,19 @@ public class ShareDialog extends DialogFragment {
                     }
                 });
         return jsonObjectRequest;
-
     }
+
+    /**
+     * method is used for checking valid email id format.
+     *
+     * @param email
+     * @return boolean true for valid false for invalid
+     */
+    public static boolean isEmailValid(String email) {
+        String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
+        Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
 }
