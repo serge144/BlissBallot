@@ -52,6 +52,7 @@ public class DetailScreen extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_detail_screen);
 
+
         //get UI refs
         image = findViewById(R.id.image_detail);
         voteBtn = findViewById(R.id.vote_button);

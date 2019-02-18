@@ -20,6 +20,7 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
             <intent-filter>
                 <!-- Sets the intent action to view the activity -->
                 <action android:name="android.intent.action.VIEW" />
@@ -34,6 +35,16 @@
         <activity android:name=".DetailScreen">
 
         </activity>
+        <receiver android:name=".NetworkBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <!-- <action android:name="android.net.wifi.WIFI_STATE_CHANGED"/> -->
+                <!-- <action android:name="android.net.wifi.STATE_CHANGE"/> -->
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+            </intent-filter>
+
+        </receiver>
     </application>
 
 </manifest>

@@ -125,10 +125,6 @@ public class QuestionsListFragment extends ListFragment {
         return request;
     }
 
-
-
-
-
     /*
         Updates the List view with new records
         @param lv   new records to add to the list view

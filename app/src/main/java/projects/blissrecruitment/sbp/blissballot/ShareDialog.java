@@ -43,27 +43,6 @@ public class ShareDialog extends DialogFragment {
         return sd;
     }
 
-
-    public JsonObjectRequest buildShareRequest(String email,String deeplink){
-        String baseUrl = BlissApiSingleton.SHARE_BASE_URL;
-        String url = baseUrl + "?destination_email=" + email + "&content_url="+ deeplink;
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
-                (Request.Method.POST, url, null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        Log.d("APP_DEBUG","[RESPONSE] "+ response.toString());
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
-                    }
-                });
-        return jsonObjectRequest;
-
-    }
-
     @NonNull
     @Override
     public Dialog onCreateDialog(@Nullable Bundle savedInstanceState) {
@@ -148,4 +127,23 @@ public class ShareDialog extends DialogFragment {
         return builder.create();
     }
 
+    public JsonObjectRequest buildShareRequest(String email,String deeplink){
+        String baseUrl = BlissApiSingleton.SHARE_BASE_URL;
+        String url = baseUrl + "?destination_email=" + email + "&content_url="+ deeplink;
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest
+                (Request.Method.POST, url, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        Log.d("APP_DEBUG","[RESPONSE] "+ response.toString());
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        // TODO: Handle error
+                    }
+                });
+        return jsonObjectRequest;
+
+    }
 }
