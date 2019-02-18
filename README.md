@@ -19,7 +19,7 @@ The Logs have all the same tag: "APP_DEBUG".
 3. Run the application with your AVD or plug in your smarthphone.
 4. Check the Logcat's output for the application log.
  
-###To do
+### To do
 
 1. Unfortunately, i built the application using Android Studio 3.2.1 which doesn't match with the Non-functional requirement specification (NREQ-02) which is 3.0.1. With this, newer versions of Android Studio requires newer versions of gradle, and as such, a minimum of gradle 4.6 is required. When setting to 4.1 the following message was "Minimum support gradle is 4.6, using 4.1" as mentioned in the third answer of this link: https://stackoverflow.com/questions/43077386/gradle-error-minimum-supported-gradle-version-is-3-3-current-version-is-3-2/43078202.
 
