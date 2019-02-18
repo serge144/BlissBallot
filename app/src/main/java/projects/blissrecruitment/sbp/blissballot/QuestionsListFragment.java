@@ -1,18 +1,16 @@
 package projects.blissrecruitment.sbp.blissballot;
 
-
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.ListFragment;
-import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
@@ -43,20 +41,23 @@ public class QuestionsListFragment extends ListFragment {
     private ListAdapter adapter;
     private SearchView searchView;
 
-    private boolean fetchingRecords = false;
-    private boolean searchMode = false;
-    private boolean firstSearch = true; //used to determine if it was the first fetch in search mode
+    private boolean fetchingRecords = false; //used to determine if its fetching records (when the list reaches bottom)
+    private boolean firstSearch = true; //used to determine if it was the first fetch in the current query
 
     private int limit = 10;
     private int currentOffset = 0;
     private String filter = "";
-
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View v = inflater.inflate(R.layout.fragment_questions_list,container,false);
+
+        //get search view UI and build the listeners
+        searchView = v.findViewById(R.id.search_question);
+        searchView.setOnQueryTextListener(buildSearchListener());
+        //setSearchCleanButtonListener();
 
         //detects when the user reaches the bottom of the list
         listView = v.findViewById(android.R.id.list);
@@ -65,16 +66,17 @@ public class QuestionsListFragment extends ListFragment {
         //initialize the array related with the ListView
         questions = new ArrayList<Question>();
 
-        //fetch the first 10 records
+        //DEEP LINK - get the query from MainActivity in case the app was opened with a deep link
+        Bundle bundle = getArguments();
+        processDeepLinkBundle(bundle);
+
+        //fetch the first 10 records with current filter param
         JsonArrayRequest allQuestionsRequest = buildGetQuestionsRequest(limit,currentOffset,filter);
         BlissApiSingleton.getInstance(getContext()).addToRequestQueue(allQuestionsRequest);
 
         //set an adapter for the ListView
         adapter = new QuestionAdapter(getContext(),questions);
         setListAdapter(adapter);
-
-        searchView = v.findViewById(R.id.search_question);
-        searchView.setOnQueryTextListener(buildSearchListener());
 
         return v;
     }
@@ -87,6 +89,7 @@ public class QuestionsListFragment extends ListFragment {
             @Override
             public void onResponse(JSONArray response) {
                 updateListView(processJSONArray(response));
+                currentOffset = currentOffset + response.length();
                 fetchingRecords = false; //used for the scroll-bottom detection of the list view
             }
         }, new Response.ErrorListener() {
@@ -128,7 +131,6 @@ public class QuestionsListFragment extends ListFragment {
     */
     private void updateListView(ArrayList<Question> newQuestions){
 
-        if(searchMode){
             if(firstSearch){ // clean in the first search, but then when scrolling to the bottom, it must not clear the questions anymore
                 questions.clear();
                 firstSearch = false;
@@ -136,12 +138,7 @@ public class QuestionsListFragment extends ListFragment {
             questions.addAll(newQuestions);
             ArrayAdapter<Question> aux = (ArrayAdapter<Question>)getListAdapter();
             aux.notifyDataSetChanged();
-        }else{
-            //append newQuestions to questions no need to clean
-            questions.addAll(newQuestions);
-            ArrayAdapter<Question> aux = (ArrayAdapter<Question>)getListAdapter();
-            aux.notifyDataSetChanged();
-        }
+
     }
 
     /*
@@ -165,7 +162,7 @@ public class QuestionsListFragment extends ListFragment {
                     if (position >= listLimit && totalItemCount > 0) {
                         Log.d("APP_DEBUG","[INFO] List bottom reached");
                         fetchingRecords = true;
-                        currentOffset = currentOffset + limit; //increase offset (+10)
+                        //currentOffset = currentOffset + limit; //increase offset (+10)
                         JsonArrayRequest allQuestionsRequest = buildGetQuestionsRequest(limit,currentOffset,filter);
                         BlissApiSingleton.getInstance(getContext()).addToRequestQueue(allQuestionsRequest);
                     }
@@ -183,30 +180,56 @@ public class QuestionsListFragment extends ListFragment {
             @Override
             public boolean onQueryTextSubmit(String query) {
                 listView.setSelection(0); //need to go up
-                searchMode = true;
                 firstSearch = true;
                 filter = query;
                 currentOffset = 0;
-                Log.d("APP_DEBUG","[INFO] Now in search mode");
-                JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,query);
+                JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter);
                 BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
                 return false;
             }
 
             @Override
             public boolean onQueryTextChange(String newText) {
-                if(newText.equals("")){
-                    searchMode = false;
-                    firstSearch = true;
-                    filter = "";
-                    currentOffset = 0;
-                    Log.d("APP_DEBUG","[INFO] Now in normal mode");
-                    JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter); //update the list with first 10 recs
-                    BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
-                }
                 return false;
             }
         } ;
+    }
+
+    public void setSearchCleanButtonListener(){
+        int searchCloseButtonId = searchView.getContext().getResources()
+                .getIdentifier("android:id/search_close_btn", null, null);
+        ImageView closeButton = (ImageView) this.searchView.findViewById(searchCloseButtonId);
+        closeButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                resetList();
+            }
+        });
+    }
+
+    public void resetList(){
+        listView.setSelection(0);
+        firstSearch = true;
+        filter = "";
+        Log.d("APP_DEBUG","[INFO] Blank query, reseting list: fetching the first 10 records");
+        currentOffset = 0;
+        searchView.setQuery("",false);
+        JsonArrayRequest searchRequest = buildGetQuestionsRequest(limit,currentOffset,filter); //update the list with first 10 recs
+        BlissApiSingleton.getInstance(getContext()).addToRequestQueue(searchRequest);
+        //searchView.setQuery("",true); //loads the first 10
+    }
+
+    public void processDeepLinkBundle(Bundle bundle){
+
+        if(bundle != null && bundle.containsKey("question_filter")){
+            filter = bundle.getString("question_filter");
+            Log.d("APP_DEBUG","[DEEP-LINK] question_filter param is: " + filter);
+            if(filter!=null) {
+                if(filter.length()>0)
+                    searchView.setQuery(filter, false);
+            }else
+                filter = "";
+        }
     }
 
     @Override

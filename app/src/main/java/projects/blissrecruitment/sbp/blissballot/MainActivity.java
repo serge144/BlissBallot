@@ -30,6 +30,8 @@ public class MainActivity extends AppCompatActivity  {
 
     private StringRequest checkServerRequest;
     private BlankFragment loadFragment;
+    private boolean isDeepLink = false;
+    private Uri deepLinkUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +40,7 @@ public class MainActivity extends AppCompatActivity  {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
+        //TODO change this to the xml
         ActionBar actionBar = getSupportActionBar();
         actionBar.setTitle("Questions");
 
@@ -47,9 +50,16 @@ public class MainActivity extends AppCompatActivity  {
         fragmentTransaction.replace(R.id.fragment_container,loadFragment,"load_fragment");
         fragmentTransaction.commit();
 
+        //Parse Uri data if it was from a deeplink
+        //@url https://code.tutsplus.com/tutorials/how-to-enable-deep-links-on-android--cms-26317
+        deepLinkUri = this.getIntent().getData();
+        if(deepLinkUri != null && deepLinkUri.isHierarchical())
+            isDeepLink = true;
+
         //make request to health check
         checkServerRequest = buildCheckServerRequest();
         BlissApiSingleton.getInstance(this).addToRequestQueue(checkServerRequest);
+
     }
 
     public StringRequest buildCheckServerRequest(){
@@ -62,29 +72,45 @@ public class MainActivity extends AppCompatActivity  {
                         try {
                             obj = new JSONObject(response);
                             String status = obj.getString("status");
-                            Log.d("APP_DEBUG",status);
                             if(status.equals("OK")){
-                                QuestionsListFragment fragment = new QuestionsListFragment();
-                                FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
-                                fragmentTransaction.replace(R.id.fragment_container,fragment);
-                                fragmentTransaction.commit();
+                                Log.d("APP_DEBUG","[RESPONSE] OK");
+                                if(isDeepLink)
+                                    setListFragment(buildDeepLinkBundle());
+                                else
+                                    setListFragment(null);
                             }else{
                                 loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.INVISIBLE);
                                 retryDialog();
                             }
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                            e.printStackTrace(); //TODO handle this json error
                         }
-
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-
+                //TODO handle this volley error
             }
         });
 
         return healthRequest;
+    }
+
+    public void setListFragment(Bundle bundle){
+        QuestionsListFragment fragment = new QuestionsListFragment();
+        if(bundle != null)
+            fragment.setArguments(bundle);
+        FragmentTransaction fragmentTransaction = getSupportFragmentManager().beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container,fragment);
+        fragmentTransaction.commit();
+    }
+
+    public Bundle buildDeepLinkBundle(){
+        String questionFilterParam = deepLinkUri.getQueryParameter("question_filter");
+        Bundle bundle = new Bundle();
+        Log.i("APP_DEBUG","[DEEP-LINK] Query parameter: "+ questionFilterParam);
+        bundle.putString("question_filter",questionFilterParam);
+        return bundle;
     }
 
     public void retryDialog(){
