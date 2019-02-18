@@ -22,6 +22,7 @@ public class BlissApiSingleton  {
     public static final String BASE_DEEPLINK_FILTER = "blissrecruitment://questions?question_filter=";
     public static final String ACTIVITY_CALLER = "activity_caller_id";
     public static final String BLISS_API_DATE_FORMAT = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static String ERROR_MESSAGE = "Something went wrong";
 
     private static BlissApiSingleton mInstance;
     private RequestQueue mRequestQueue;

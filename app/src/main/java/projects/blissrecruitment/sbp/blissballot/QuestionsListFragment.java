@@ -20,6 +20,7 @@ import android.widget.ImageView;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.Response;
@@ -39,7 +40,7 @@ public class QuestionsListFragment extends ListFragment {
 
     /*
     * This interface is used to attach some component that wishes to listen for the First Response Event
-    * for example, the MainActivity implements this interface, this way it
+    * for example, the MainActivity implements this interface, this way it can send message back to the activity
     * */
     //=======================================================
     OnFirstResponseListener mCallback;
@@ -118,10 +119,15 @@ public class QuestionsListFragment extends ListFragment {
         JsonArrayRequest request = new JsonArrayRequest(Request.Method.GET, url, null, new Response.Listener<JSONArray>() {
             @Override
             public void onResponse(JSONArray response) {
-                updateListView(Question.processJSONArray(response));//converts JSON to arrayList of questions and updates the list
-                currentOffset = currentOffset + response.length(); //if we got 5 records when we have already 10, then offset = 15
-                mCallback.onFirstResponseListener();
-                fetchingRecords = false; //used for the scroll-bottom detection of the list view
+                if(response!=null){
+                    updateListView(Question.processJSONArray(response));//converts JSON to arrayList of questions and updates the list
+                    currentOffset = currentOffset + response.length(); //if we got 5 records when we have already 10, then offset = 15
+                    mCallback.onFirstResponseListener();
+                    fetchingRecords = false; //used for the scroll-bottom detection of the list view
+                }else{
+                    Toast.makeText(getContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
+                }
+
             }
         }, new Response.ErrorListener() {
             @Override

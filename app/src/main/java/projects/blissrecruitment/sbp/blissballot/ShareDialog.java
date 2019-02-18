@@ -1,7 +1,9 @@
 package projects.blissrecruitment.sbp.blissballot;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -26,6 +28,21 @@ public class ShareDialog extends DialogFragment {
 
     public static final int SHARE_FILTER_MODE = 100;
     public static final int SHARE_QUESTION_MODE = 101;
+
+    OnShareListener mCallBack;
+    public interface OnShareListener{
+        public void onShareListener(String text);
+    }
+    @SuppressWarnings("deprecation")
+    @Override
+    public void onAttach(Activity activity) {
+        super.onAttach(activity);
+        try{
+            mCallBack = (OnShareListener) activity;
+        } catch (ClassCastException e){
+            throw new ClassCastException(activity.toString()+" must implement OnShareListener");
+        }
+    }
 
     static ShareDialog newInstance(String query, int shareMode){
         ShareDialog sd = new ShareDialog();
@@ -148,21 +165,23 @@ public class ShareDialog extends DialogFragment {
                     public void onResponse(JSONObject response) {
                         Log.d("APP_DEBUG","[RESPONSE] "+ response.toString());
                         try {
-                            if(response.getString("status").equals("OK")){
-                                Toast.makeText(getContext(),"Successfully Shared: "+ deeplink, Toast.LENGTH_SHORT).show();
+                            if(response!= null){
+                                if(response.getString("status").equals("OK"))
+                                    mCallBack.onShareListener("Successfully share: "+ deeplink);
+                                else
+                                    mCallBack.onShareListener(BlissApiSingleton.ERROR_MESSAGE);
                             }else{
-                                Toast.makeText(getContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
+                                mCallBack.onShareListener(BlissApiSingleton.ERROR_MESSAGE);
                             }
                         } catch (JSONException e) {
-                            e.printStackTrace();
+                            mCallBack.onShareListener(BlissApiSingleton.ERROR_MESSAGE);
                         }
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
-                        Toast.makeText(getContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
+                        mCallBack.onShareListener(BlissApiSingleton.ERROR_MESSAGE);
                     }
                 });
         return jsonObjectRequest;

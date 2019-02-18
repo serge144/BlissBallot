@@ -36,7 +36,7 @@ import com.android.volley.toolbox.Volley;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-public class MainActivity extends AppCompatActivity implements QuestionsListFragment.OnFirstResponseListener {
+public class MainActivity extends AppCompatActivity implements QuestionsListFragment.OnFirstResponseListener, ShareDialog.OnShareListener {
 
     private StringRequest checkServerRequest;
     private BlankFragment loadFragment;
@@ -47,6 +47,7 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
     public static final String COMS_ID = "main_activity_id";
     public static final int DEEP_LINK_DIRECT_CODE = 44;
     public static boolean isActive = true; //used to determine if this Activity is active or paused
+
 
     /*This broadcast is used to receive messages from the NetworkBroadcastReceiver
     *If the NBR detects no internet connection, then this local receiver receives the broadcast and sets a No-Coms Dialog
@@ -113,30 +114,32 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
                 new Response.Listener<String>() {
                     @Override
                     public void onResponse(String response) {
-                        JSONObject obj = null;
-                        try {
-                            obj = new JSONObject(response);
-                            String status = obj.getString("status");
-                            if(status.equals("OK")){
-                                Log.d("APP_DEBUG","[RESPONSE] OK");
-                                if(isDeepLink) {
-                                    processDeepLink();
-                                }else
-                                    setListFragment(null); //null means that we dont need to pass anything onto listfragment (no deeplink)
-                            }else{
-                                loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.INVISIBLE);
-                                retryDialog();
+                        if(response!=null){
+                            JSONObject obj = null;
+                            try {
+                                obj = new JSONObject(response);
+                                String status = obj.getString("status");
+                                if(status.equals("OK")){
+                                    Log.d("APP_DEBUG","[RESPONSE] OK");
+                                    if(isDeepLink) {
+                                        processDeepLink();
+                                    }else
+                                        setListFragment(null); //null means that we dont need to pass anything onto listfragment (no deeplink)
+                                }else{
+                                    loadFragment.getView().findViewById(R.id.progressBar2).setVisibility(View.INVISIBLE);
+                                    retryDialog();
+                                }
+                            } catch (JSONException e) {
+                                Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
                             }
-                        } catch (JSONException e) {
-                            e.printStackTrace(); //TODO handle this json error
-                            Toast.makeText(getApplicationContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
+                        }else{
+                            Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
                         }
                     }
                 }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                //TODO handle this volley error
-                Toast.makeText(getApplicationContext(),"Something went wrong.",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -268,6 +271,13 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         gotFirstResponse = true;
     }
 
+    /*When the ShareDialog sends success/error message back to activity
+     * */
+    @Override
+    public void onShareListener(String text) {
+        Toast.makeText(getApplicationContext(),text,Toast.LENGTH_SHORT).show();
+    }
+
     @Override
     public void onAttachFragment(Fragment fragment) {
         if (fragment instanceof QuestionsListFragment) {
@@ -288,4 +298,5 @@ public class MainActivity extends AppCompatActivity implements QuestionsListFrag
         super.onPause();
         isActive = false;
     }
+
 }

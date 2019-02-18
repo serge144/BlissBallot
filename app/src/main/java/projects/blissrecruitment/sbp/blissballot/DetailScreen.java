@@ -41,7 +41,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 
-public class DetailScreen extends AppCompatActivity {
+public class DetailScreen extends AppCompatActivity implements ShareDialog.OnShareListener {
 
     private Question question;
     private LinearLayout linearLayout;
@@ -143,15 +143,18 @@ public class DetailScreen extends AppCompatActivity {
 
                     @Override
                     public void onResponse(JSONObject response) {
-                        question = Question.processJSONObject(response);
-                        buildDetailView();
+                        if(response!=null){
+                            question = Question.processJSONObject(response);
+                            buildDetailView();
+                        }else{
+                            Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
+                        }
                     }
                 }, new Response.ErrorListener() {
 
                     @Override
                     public void onErrorResponse(VolleyError error) {
-                        // TODO: Handle error
-
+                        Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
                     }
                 });
         return jsonObjectRequest;
@@ -210,12 +213,14 @@ public class DetailScreen extends AppCompatActivity {
                 Log.d("APP_DEBUG","[RESPONSE]" + response.toString());
                 if(response != null){
                     Toast.makeText(getApplicationContext(),"Vote updated.",Toast.LENGTH_SHORT).show();
+                }else{
+                    Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
                 }
             }
         }, new Response.ErrorListener() {
             @Override
             public void onErrorResponse(VolleyError error) {
-                //TODO Handle error
+                Toast.makeText(getApplicationContext(),BlissApiSingleton.ERROR_MESSAGE,Toast.LENGTH_SHORT).show();
             }
         });
         return jrequest;
@@ -308,5 +313,10 @@ public class DetailScreen extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         finish();
         return true;
+    }
+
+    @Override
+    public void onShareListener(String text) {
+        Toast.makeText(getApplicationContext(),text,Toast.LENGTH_SHORT).show();
     }
 }
